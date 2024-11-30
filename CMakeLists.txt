@@ -1,32 +1,40 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(Cache_system)
+# Project name and version
+project(CacheSystem VERSION 1.0)
 
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Основной исполняемый файл
-add_executable(cache_tests tests/cache_tests.cpp src/cache.cpp)
+# Add source files
+set(SOURCES
+    src/cache.cpp
+    src/lru_strategy.cpp
+)
 
-# Путь к заголовочным файлам
-target_include_directories(cache_tests PRIVATE include)
+# Add header files
+set(HEADERS
+    include/cache.hpp
+    include/lru_strategy.hpp
+)
 
-# Подключение JSON-библиотеки
-find_package(nlohmann_json REQUIRED)
-target_link_libraries(cache_tests PRIVATE nlohmann_json::nlohmann_json)
+# Include directories
+include_directories(include)
 
+# Add the main library target
+add_library(CacheSystem ${SOURCES} ${HEADERS})
 
-add_executable(performance_tests tests/performance_tests.cpp src/cache.cpp)
-target_include_directories(performance_tests PRIVATE include)
-target_link_libraries(performance_tests PRIVATE nlohmann_json::nlohmann_json)
+# Enable testing
+enable_testing()
 
+# Add Google Test
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
 
-# Подключаем pybind11
-find_package(pybind11 REQUIRED)
+# Add the test executable
+add_executable(CacheTests tests/cache_tests.cpp)
+target_link_libraries(CacheTests PRIVATE CacheSystem GTest::GTest GTest::Main)
 
-# Добавляем модуль Python
-add_library(cache_module MODULE pybind/cache_bindings.cpp src/cache.cpp)
-target_include_directories(cache_module PRIVATE include)
-target_link_libraries(cache_module PRIVATE pybind11::module nlohmann_json::nlohmann_json)
-
-# Установка имени файла модуля
-set_target_properties(cache_module PROPERTIES PREFIX "" SUFFIX ".so")
+# Add test to CTest
+add_test(NAME CacheTests COMMAND CacheTests)

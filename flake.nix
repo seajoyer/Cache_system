@@ -52,7 +52,7 @@
 
           nativeBuildInputs = with pkgs; [ gnumake cmake ccache git bear libgcc ];
 
-          buildInputs = with pkgs; [ libcxx catch nlohmann_json python312Packages.pybind11 python312Packages.cppy python312Packages.pydevtool ];
+          buildInputs = with pkgs; [ libcxx catch gtest nlohmann_json python312Packages.pybind11 python312Packages.cppy python312Packages.pydevtool ];
 
           shellHook = ''
             export CC=gcc
@@ -62,6 +62,7 @@
             export CCACHE_DIR=$HOME/.ccache
             export PATH="$HOME/.ccache/bin:$PATH"
             export CPATH=${pkgs.catch}/include:$CPATH
+            export CPATH=${pkgs.gtest}:$CPATH
             export CPATH=${pkgs.nlohmann_json}/include:$CPATH
             export CPATH=${pkgs.python312Packages.pybind11}/include:$CPATH
             export CPATH=${pkgs.python312Packages.cppy}/include:$CPATH
