@@ -8,76 +8,45 @@
 
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
+      let pkgs = nixpkgs.legacyPackages.${system};
+      in {
+        devShells.default = pkgs.mkShell {
+          name = "cache-system-devshell";
 
-        testDoublyLinkedList = pkgs.stdenv.mkDerivation {
-          pname = "cache_system_tests";
-          version = "0.1.0";
-          name = "cache_system_tests-0.1.0";
+          buildInputs = with pkgs; [ cmake gcc gtest direnv clang-tools bear ];
 
+          CXX = "${pkgs.gcc}/bin/g++";
+          CC = "${pkgs.gcc}/bin/gcc";
+
+          shellHook = ''
+            eval "$(direnv hook bash)"
+            export CPATH=${pkgs.gtest.dev}/include:$CPATH
+            echo "Environment is ready."
+          '';
+        };
+
+        # Optional: If you use nix to build the project
+        packages.default = pkgs.stdenv.mkDerivation {
+          name = "Cache_system";
           src = ./.;
 
-          nativeBuildInputs = with pkgs; [ gnumake libgcc cmake ];
-
-          buildInputs = with pkgs; [ libcxx catch ];
-
-          cmakeFlags = [
-            "-DCMAKE_BUILD_TYPE=Release"
-            "-DCMAKE_CXX_FLAGS=-std=c++17"
-          ];
+          buildInputs = [ pkgs.cmake pkgs.gcc pkgs.google-test ];
 
           buildPhase = ''
-            cmake .
-            make VERBOSE=1 -j $NIX_BUILD_CORES
+            mkdir -p build
+            cd build
+            cmake .. -DCMAKE_BUILD_TYPE=Release
+            cmake --build .
+          '';
+
+          checkPhase = ''
+            cd build
+            ctest
           '';
 
           installPhase = ''
             mkdir -p $out/bin
-            cp cache_system_tests $out/bin/
-          '';
-        };
-
-      in {
-        packages = {
-          default = testDoublyLinkedList;
-        };
-
-        apps = {
-          default = flake-utils.lib.mkApp { drv = testDoublyLinkedList; };
-        };
-
-        devShells.default = pkgs.mkShell {
-          name = "cache_system-dev-shell";
-
-          nativeBuildInputs = with pkgs; [ gnumake cmake ccache git bear libgcc ];
-
-          buildInputs = with pkgs; [ libcxx catch gtest nlohmann_json python312Packages.pybind11 python312Packages.cppy python312Packages.pydevtool ];
-
-          shellHook = ''
-            export CC=gcc
-            export CXX=g++
-            export CXXFLAGS="''${CXXFLAGS:-}"
-
-            export CCACHE_DIR=$HOME/.ccache
-            export PATH="$HOME/.ccache/bin:$PATH"
-            export CPATH=${pkgs.catch}/include:$CPATH
-            export CPATH=${pkgs.gtest}:$CPATH
-            export CPATH=${pkgs.nlohmann_json}/include:$CPATH
-            export CPATH=${pkgs.python312Packages.pybind11}/include:$CPATH
-            export CPATH=${pkgs.python312Packages.cppy}/include:$CPATH
-            export CPATH=${pkgs.python312Packages.pydevtool}/include:$CPATH
-
-            alias c=clear
-
-            echo "======================================"
-            echo "$(gcc    --version | head -n 1)"
-            echo "$(make   --version | head -n 1)"
-            echo ""
-            echo "Build the project:  nix build"
-            echo "Run the project:    nix run"
-            echo ""
-            echo "Happy coding!"
+            cp -r build $out/bin/
           '';
         };
       });
