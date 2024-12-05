@@ -25,6 +25,11 @@ std::optional<CacheItem> LRUCache::get(int key) {
     return entry.item;
 }
 
+CacheMetrics LRUCache::get_metrics() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return metrics_;
+}
+
 void LRUCache::put_internal(int key, CacheItem value) {
     evict_if_needed();
 

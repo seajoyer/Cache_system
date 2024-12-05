@@ -5,6 +5,14 @@
 
 class CacheMetrics {
 public:
+    CacheMetrics() = default;
+
+    // Add copy constructor
+    CacheMetrics(const CacheMetrics& other);
+
+    // Add copy assignment operator
+    CacheMetrics& operator=(const CacheMetrics& other);
+
     void record_read(std::chrono::nanoseconds duration);
     void record_write(std::chrono::nanoseconds duration);
     void update_memory_usage(size_t bytes);

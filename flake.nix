@@ -22,9 +22,8 @@
             clang-tools
             bear
             nlohmann_json
-
-            python3
-            python3Packages.pybind11
+            (python3.withPackages
+              (ps: with ps; [ matplotlib psutil pybind11 numpy pybind11 ]))
           ];
 
           CXX = "${pkgs.gcc}/bin/g++";
