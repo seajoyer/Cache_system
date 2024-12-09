@@ -16,7 +16,7 @@ TEST_CASE("Cache basic operations", "[cache]") {
         cache.put(2, item2);
 
         auto result1 = cache.get(1);
-        REQUIRE(result1.has_value());
+        REQUIRE(result1);
         CHECK(result1->id == 1);
         CHECK(result1->faculty == "CS");
     }
@@ -25,7 +25,7 @@ TEST_CASE("Cache basic operations", "[cache]") {
         cache.put(1, item1);
         cache.remove(1);
         auto result = cache.get(1);
-        REQUIRE_FALSE(result.has_value());
+        REQUIRE_FALSE(result);
     }
 }
 
@@ -38,12 +38,12 @@ TEST_CASE("LRU eviction strategy", "[cache]") {
 
     cache.put(1, item1);
     cache.put(2, item2);
-    REQUIRE(cache.get(1).has_value());
+    REQUIRE(cache.get(1));
 
-    cache.put(3, item3);  // Should evict item2 since item1 was just accessed
-    REQUIRE(cache.get(1).has_value());
-    REQUIRE_FALSE(cache.get(2).has_value());
-    REQUIRE(cache.get(3).has_value());
+    cache.put(3, item3);
+    REQUIRE(cache.get(1));
+    REQUIRE_FALSE(cache.get(2));
+    REQUIRE(cache.get(3));
 }
 
 TEST_CASE("Thread safety", "[cache]") {
@@ -60,7 +60,7 @@ TEST_CASE("Thread safety", "[cache]") {
                 cache.put(i, item);
 
                 auto result = cache.get(i);
-                if (result.has_value() && result->id == i) {
+                if (result && result->id == i) {
                     completed++;
                 }
             } catch (const std::exception& e) {
@@ -80,7 +80,6 @@ TEST_CASE("Thread safety", "[cache]") {
 TEST_CASE("Cache serialization", "[cache]") {
     const std::string test_file = "test_cache.json";
 
-    // Clean up any existing test file
     std::remove(test_file.c_str());
 
     SECTION("Save and load cache") {
@@ -92,7 +91,6 @@ TEST_CASE("Cache serialization", "[cache]") {
             cache.put(1, item);
             REQUIRE_NOTHROW(cache.save_to_file(test_file));
 
-            // Verify file exists and is readable
             std::ifstream verify_file(test_file);
             REQUIRE(verify_file.good());
             verify_file.close();
@@ -105,7 +103,7 @@ TEST_CASE("Cache serialization", "[cache]") {
             REQUIRE_NOTHROW(new_cache.load_from_file(test_file));
 
             auto result = new_cache.get(1);
-            REQUIRE(result.has_value());
+            REQUIRE(result);
             CHECK(result->faculty == "CS");
             CHECK(result->course == "Algorithms");
         }

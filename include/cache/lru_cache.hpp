@@ -1,9 +1,9 @@
 #pragma once
 
-#include <optional>
 #include <unordered_map>
 #include <list>
 #include <mutex>
+#include <experimental/optional>
 #include <shared_mutex>
 #include "cache_item.hpp"
 #include "metrics.hpp"
@@ -12,7 +12,7 @@ class LRUCache {
 public:
     explicit LRUCache(size_t capacity);
 
-    std::optional<CacheItem> get(int key);
+    std::experimental::optional<CacheItem> get(int key);
     void put(int key, CacheItem value);
     void remove(int key);
     void clear();

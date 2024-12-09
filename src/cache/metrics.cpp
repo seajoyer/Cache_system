@@ -21,17 +21,22 @@ CacheMetrics& CacheMetrics::operator=(const CacheMetrics& other) {
 }
 
 void CacheMetrics::record_read(std::chrono::nanoseconds duration) {
-    total_reads_++;
-    total_read_time_ += duration.count();
+    total_reads_.fetch_add(1, std::memory_order_relaxed);
+    total_read_time_.fetch_add(duration.count(), std::memory_order_relaxed);
 }
 
 void CacheMetrics::record_write(std::chrono::nanoseconds duration) {
-    total_writes_++;
-    total_write_time_ += duration.count();
+    total_writes_.fetch_add(1, std::memory_order_relaxed);
+    total_write_time_.fetch_add(duration.count(), std::memory_order_relaxed);
 }
 
-void CacheMetrics::update_memory_usage(size_t bytes) {
-    memory_usage_ += bytes;
+void CacheMetrics::update_memory_usage(ssize_t delta) {
+    memory_usage_.fetch_add(delta, std::memory_order_relaxed);
+}
+
+size_t CacheMetrics::get_memory_usage() const {
+    ssize_t usage = memory_usage_.load(std::memory_order_relaxed);
+    return usage > 0 ? static_cast<size_t>(usage) : 0;
 }
 
 double CacheMetrics::get_avg_read_time() const {
@@ -46,6 +51,16 @@ double CacheMetrics::get_avg_write_time() const {
     return static_cast<double>(total_write_time_.load()) / writes;
 }
 
-size_t CacheMetrics::get_memory_usage() const {
-    return memory_usage_.load();
+void CacheMetrics::record_cache_hit() {
+    cache_hits_++;
+}
+
+void CacheMetrics::record_cache_miss() {
+    cache_misses_++;
+}
+
+double CacheMetrics::get_hit_rate() const {
+    uint64_t total = cache_hits_.load() + cache_misses_.load();
+    if (total == 0) return 0.0;
+    return (static_cast<double>(cache_hits_.load()) / total) * 100.0;
 }

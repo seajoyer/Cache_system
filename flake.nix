@@ -23,11 +23,11 @@
             bear
             nlohmann_json
             (python3.withPackages
-              (ps: with ps; [ matplotlib psutil pybind11 numpy pybind11 ]))
+              (ps: with ps; [ matplotlib psutil pybind11 numpy ]))
           ];
 
           CXX = "${pkgs.gcc}/bin/g++";
-          CC = "${pkgs.gcc}/bin/gcc";
+          CC  = "${pkgs.gcc}/bin/gcc";
 
           shellHook = ''
             export CCACHE_DIR=$HOME/.ccache
