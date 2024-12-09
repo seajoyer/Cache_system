@@ -39,10 +39,10 @@ class CachePerformanceTester:
 
         # Create and insert items
         print("\nTesting write performance...")
-        batch_size = num_operations // 20
+        batch_size = num_operations * 0.25
         for i in range(num_operations):
-            if i % batch_size == 0:
-                print(f"Written {i:,} items ({(i/num_operations)*100:.1f}%)...")
+            if (i+1) % batch_size == 0:
+                print(f"Written {(i+1):,} items ({((i+1)/num_operations)*100:.1f}%)...")
 
             item = self.create_test_item(i)
             start_time = time.perf_counter()
@@ -58,8 +58,8 @@ class CachePerformanceTester:
         print("\nTesting read performance...")
         num_reads = num_operations * 2  # Double the reads to test cache hits
         for i in range(num_reads):
-            if i % batch_size == 0:
-                print(f"Read progress: {(i/num_reads)*100:.1f}%...")
+            if (i+1) % (batch_size * 2) == 0:
+                print(f"Read progress: {((i+1)/num_reads)*100:.1f}%...")
 
             # Read existing items with some locality of reference
             # Generate a key that's guaranteed to be within our valid range
@@ -88,10 +88,10 @@ class CachePerformanceTester:
         base_memory = self.process.memory_info().rss
         print(f"\nBase memory usage: {base_memory / (1024 * 1024):.2f} MB")
 
-        batch_size = num_items // 20
-        for i in range(0, num_items, batch_size):
-            if i % batch_size == 0:
-                print(f"Added {i:,} items ({(i/num_items)*100:.1f}%)...")
+        batch_size = int(num_items * 0.25)
+        for i in range(0, num_items+1, batch_size):
+            if (i) % batch_size == 0:
+                print(f"\nAdded {(i):,} items ({((i)/num_items)*100:.1f}%)...")
 
             # Add batch_size items
             for j in range(batch_size):
@@ -126,7 +126,7 @@ class CachePerformanceTester:
 
             try:
                 for i in range(operations_per_thread):
-                    if i % (operations_per_thread // 10) == 0:
+                    if (i+1) % (operations_per_thread * 0.5) == 0:
                         print(f"Thread {worker_id}: {(i/operations_per_thread)*100:.1f}% complete")
 
                     # Use modulo to create key locality and increase hit rate
