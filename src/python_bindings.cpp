@@ -6,11 +6,6 @@
 
 namespace py = pybind11;
 
-namespace pybind11 { namespace detail {
-    template <typename T>
-    struct type_caster<std::experimental::optional<T>> : optional_caster<std::experimental::optional<T>> {};
-}}
-
 PYBIND11_MODULE(cache_system, m) {
     m.doc() = "C++ LRU Cache system with Python bindings";
 
