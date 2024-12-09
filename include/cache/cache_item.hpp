@@ -14,6 +14,6 @@ public:
     std::string telegramGroupLink;
     int userId;
 
-    [[nodiscard]] nlohmann::json to_json() const;
+    nlohmann::json to_json() const;
     static CacheItem from_json(const nlohmann::json& j);
 };

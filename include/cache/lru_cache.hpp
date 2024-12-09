@@ -15,13 +15,13 @@ public:
     void put(int key, CacheItem value);
     void remove(int key);
     void clear();
-    [[nodiscard]] size_t size() const;
-    [[nodiscard]] size_t capacity() const;
+    size_t size() const;  // Remove [[nodiscard]]
+    size_t capacity() const;  // Remove [[nodiscard]]
 
     void save_to_file(const std::string& filename);
     void load_from_file(const std::string& filename);
 
-    [[nodiscard]] const CacheMetrics& get_metrics() const { return metrics_; }
+    const CacheMetrics& get_metrics() const { return metrics_; }  // Remove [[nodiscard]]
 
 private:
     struct CacheEntry {

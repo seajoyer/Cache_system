@@ -22,7 +22,9 @@ std::experimental::optional<CacheItem> LRUCache::get(int key) {
     metrics_.record_cache_hit();
 
     // Update access time and move to front of LRU list
-    auto& [list_it, entry] = it->second;
+    auto& pair = it->second;
+    auto& list_it = pair.first;
+    auto& entry = pair.second;
     entry.last_access = std::chrono::steady_clock::now();
     lru_list_.splice(lru_list_.begin(), lru_list_, list_it);
 
@@ -130,10 +132,10 @@ void LRUCache::save_to_file(const std::string& filename) {
 
     try {
         nlohmann::json j = nlohmann::json::array();
-        for (const auto& [key, value] : cache_) {
+        for (const auto& entry : cache_) {
             j.push_back({
-                {"key", key},
-                {"value", value.second.item.to_json()}
+                {"key", entry.first},
+                {"value", entry.second.second.item.to_json()}
             });
         }
 
