@@ -7,7 +7,7 @@ LRUCache::LRUCache(size_t capacity) : capacity_(capacity) {
     cache_.reserve(capacity);
 }
 
-std::experimental::optional<CacheItem> LRUCache::get(int key) {
+pybind11::object LRUCache::get(int key) {
     auto start = std::chrono::steady_clock::now();
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -16,7 +16,7 @@ std::experimental::optional<CacheItem> LRUCache::get(int key) {
         metrics_.record_cache_miss();
         auto duration = std::chrono::steady_clock::now() - start;
         metrics_.record_read(std::chrono::duration_cast<std::chrono::nanoseconds>(duration));
-        return std::experimental::nullopt;
+        return pybind11::none();
     }
 
     metrics_.record_cache_hit();
@@ -30,7 +30,7 @@ std::experimental::optional<CacheItem> LRUCache::get(int key) {
     auto duration = std::chrono::steady_clock::now() - start;
     metrics_.record_read(std::chrono::duration_cast<std::chrono::nanoseconds>(duration));
 
-    return entry.item;
+    return pybind11::cast(entry.item);
 }
 
 size_t LRUCache::calculate_item_memory_size(const CacheItem& item) const {
