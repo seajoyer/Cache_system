@@ -9,26 +9,31 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Include FetchContent for downloading dependencies
 include(FetchContent)
 
-# Handle pybind11
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/pybind11-download")
-    message(STATUS "Downloading pybind11...")
+# Configure pybind11
+if(NOT TARGET pybind11::pybind11)
+    message(STATUS "Fetching pybind11...")
     FetchContent_Declare(
         pybind11
         GIT_REPOSITORY https://github.com/pybind/pybind11.git
-        GIT_TAG        v2.10.4  # Using a stable version that works with older compilers
+        GIT_TAG        v2.10.4
     )
     FetchContent_MakeAvailable(pybind11)
-else()
-    find_package(pybind11 REQUIRED)
 endif()
 
-# Handle nlohmann_json
+# Configure nlohmann_json
+message(STATUS "Fetching nlohmann_json...")
 FetchContent_Declare(
-    json
+    nlohmann_json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.2  # Using a stable version compatible with C++14
+    GIT_TAG v3.11.2
+    GIT_SHALLOW TRUE
 )
-FetchContent_MakeAvailable(json)
+
+FetchContent_GetProperties(nlohmann_json)
+if(NOT nlohmann_json_POPULATED)
+    FetchContent_Populate(nlohmann_json)
+    add_subdirectory(${nlohmann_json_SOURCE_DIR} ${nlohmann_json_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
 # Define include directories
 set(CACHE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
