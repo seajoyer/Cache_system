@@ -6,13 +6,12 @@
 #include <experimental/optional>
 #include "cache_item.hpp"
 #include "metrics.hpp"
-#include <pybind11/pytypes.h>
 
 class LRUCache {
 public:
     explicit LRUCache(size_t capacity);
 
-    pybind11::object get(int key);
+    std::experimental::optional<CacheItem> get(int key);
     void put(int key, CacheItem value);
     void remove(int key);
     void clear();

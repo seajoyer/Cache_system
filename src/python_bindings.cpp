@@ -57,7 +57,7 @@ PYBIND11_MODULE(cache_system, m) {
 
     py::class_<LRUCache>(m, "LRUCache")
         .def(py::init<size_t>())
-        .def("get", &LRUCache::get)
+        .def("get", &LRUCache::get, py::return_value_policy::move)
         .def("put", &LRUCache::put)
         .def("remove", &LRUCache::remove)
         .def("clear", &LRUCache::clear)
