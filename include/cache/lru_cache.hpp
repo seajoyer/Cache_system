@@ -32,6 +32,7 @@ private:
     void put_internal(int key, CacheItem value);
     void evict_if_needed();
     size_t calculate_item_memory_size(const CacheItem& item) const;
+    size_t calculate_string_memory(const CacheItem& item) const;  // Added missing declaration
 
     mutable std::mutex mutex_;
     const size_t capacity_;

@@ -2,7 +2,6 @@
 #include <pybind11/stl.h>
 #include "cache/lru_cache.hpp"
 #include "cache/metrics.hpp"
-#include "cache/pybind_utils.hpp"
 
 namespace py = pybind11;
 
@@ -44,11 +43,11 @@ PYBIND11_MODULE(cache_system, m) {
         .def_property_readonly("avg_read_time", &CacheMetrics::get_avg_read_time)
         .def_property_readonly("avg_write_time", &CacheMetrics::get_avg_write_time)
         .def_property_readonly("memory_usage", &CacheMetrics::get_memory_usage)
-        .def_property_readonly("hit_rate", &CacheMetrics::get_hit_rate)
-        .def("get_avg_read_time", &CacheMetrics::get_avg_read_time)
-        .def("get_avg_write_time", &CacheMetrics::get_avg_write_time)
-        .def("get_memory_usage", &CacheMetrics::get_memory_usage)
-        .def("get_hit_rate", &CacheMetrics::get_hit_rate);
+        .def_property_readonly("peak_memory_usage", &CacheMetrics::get_peak_memory_usage)
+        .def_property_readonly("item_count", &CacheMetrics::get_item_count)
+        .def_property_readonly("string_memory", &CacheMetrics::get_string_memory)
+        .def_property_readonly("average_item_size", &CacheMetrics::get_average_item_size)
+        .def_property_readonly("hit_rate", &CacheMetrics::get_hit_rate);
 
     py::class_<LRUCache>(m, "LRUCache")
         .def(py::init<size_t>())

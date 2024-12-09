@@ -37,23 +37,30 @@ std::experimental::optional<CacheItem> LRUCache::get(int key) {
 size_t LRUCache::calculate_item_memory_size(const CacheItem& item) const {
     // Calculate memory for strings (actual capacity)
     size_t string_memory =
-        item.faculty.capacity() +
-        item.course.capacity() +
-        item.title.capacity() +
-        item.description.capacity() +
-        item.telegramGroupLink.capacity();
+        item.faculty.capacity() * sizeof(char) +
+        item.course.capacity() * sizeof(char) +
+        item.title.capacity() * sizeof(char) +
+        item.description.capacity() * sizeof(char) +
+        item.telegramGroupLink.capacity() * sizeof(char);
 
-    // Add memory for integers and string objects themselves
-    // Base size includes:
-    // 1. CacheItem structure
-    // 2. Map entry overhead (pair of iterator and CacheEntry)
-    // 3. Approximate list node overhead (3 pointers: prev, next, and data)
+    // Add string object overhead (assuming 3 pointers per string for SSO)
+    constexpr size_t string_overhead = 3 * sizeof(void*) * 5; // 5 strings
+
+    // Base structure size
     constexpr size_t base_size =
-        sizeof(CacheItem) +   // Base structure
+        sizeof(CacheItem) +  // The item itself
         sizeof(std::pair<typename std::list<CacheEntry>::iterator, CacheEntry>) + // Map entry
-        3 * sizeof(void*);  // Approximate list node overhead
+        sizeof(CacheEntry); // List node (simplified for C++14)
 
-    return base_size + string_memory;
+    return base_size + string_memory + string_overhead;
+}
+
+size_t LRUCache::calculate_string_memory(const CacheItem& item) const {
+    return item.faculty.capacity() * sizeof(char) +
+           item.course.capacity() * sizeof(char) +
+           item.title.capacity() * sizeof(char) +
+           item.description.capacity() * sizeof(char) +
+           item.telegramGroupLink.capacity() * sizeof(char);
 }
 
 void LRUCache::put_internal(int key, CacheItem value) {
@@ -80,7 +87,35 @@ void LRUCache::put_internal(int key, CacheItem value) {
 void LRUCache::put(int key, CacheItem value) {
     auto start = std::chrono::steady_clock::now();
     std::lock_guard<std::mutex> lock(mutex_);
-    put_internal(key, std::move(value));
+
+    size_t new_item_size = calculate_item_memory_size(value);
+
+    // Remove old item's memory if it exists
+    auto old_it = cache_.find(key);
+    if (old_it != cache_.end()) {
+        size_t old_size = calculate_item_memory_size(old_it->second.second.item);
+        metrics_.update_memory_usage(-static_cast<ssize_t>(old_size));
+        metrics_.update_item_count(-1);
+        metrics_.update_string_memory(
+            -static_cast<ssize_t>(calculate_string_memory(old_it->second.second.item)));
+        lru_list_.erase(old_it->second.first);
+        cache_.erase(old_it);
+    }
+
+    evict_if_needed();
+
+    // Add new entry
+    CacheEntry entry{std::move(value), std::chrono::steady_clock::now()};
+    lru_list_.push_front(entry);
+    cache_[key] = {lru_list_.begin(), entry};
+
+    // Update metrics
+    metrics_.update_memory_usage(static_cast<ssize_t>(new_item_size));
+    metrics_.update_item_count(1);
+    metrics_.update_string_memory(
+        static_cast<ssize_t>(calculate_string_memory(entry.item)));
+    metrics_.update_peak_memory();
+
     auto duration = std::chrono::steady_clock::now() - start;
     metrics_.record_write(std::chrono::duration_cast<std::chrono::nanoseconds>(duration));
 }
