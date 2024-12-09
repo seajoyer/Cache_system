@@ -15,13 +15,13 @@ public:
     void put(int key, CacheItem value);
     void remove(int key);
     void clear();
-    size_t size() const;  // Remove [[nodiscard]]
-    size_t capacity() const;  // Remove [[nodiscard]]
+    size_t size() const;
+    size_t capacity() const;
 
     void save_to_file(const std::string& filename);
     void load_from_file(const std::string& filename);
 
-    const CacheMetrics& get_metrics() const { return metrics_; }  // Remove [[nodiscard]]
+    const CacheMetrics& get_metrics() const { return metrics_; }
 
 private:
     struct CacheEntry {
@@ -31,7 +31,7 @@ private:
 
     void put_internal(int key, CacheItem value);
     void evict_if_needed();
-    [[nodiscard]] size_t calculate_item_memory_size(const CacheItem& item) const;
+    size_t calculate_item_memory_size(const CacheItem& item) const;
 
     mutable std::mutex mutex_;
     const size_t capacity_;

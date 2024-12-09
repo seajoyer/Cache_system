@@ -19,13 +19,13 @@ public:
     void record_write(std::chrono::nanoseconds duration);
     void update_memory_usage(ssize_t bytes);
 
-    [[nodiscard]] double get_avg_read_time() const;
-    [[nodiscard]] double get_avg_write_time() const;
-    [[nodiscard]] size_t get_memory_usage() const;
+    double get_avg_read_time() const;
+    double get_avg_write_time() const;
+    size_t get_memory_usage() const;
 
     void record_cache_hit();
     void record_cache_miss();
-    [[nodiscard]] double get_hit_rate() const;
+    double get_hit_rate() const;
 
 private:
     std::atomic<uint64_t> total_reads_{0};

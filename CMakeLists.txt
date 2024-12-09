@@ -95,6 +95,8 @@ target_include_directories(cache_tests
         ${CACHE_INCLUDE_DIRS}
 )
 target_link_libraries(cache_tests
-    PRIVATE cache_lib
+    PRIVATE
+        cache_lib
+        pthread
 )
 add_test(NAME cache_tests COMMAND cache_tests)
