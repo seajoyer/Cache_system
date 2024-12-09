@@ -3,7 +3,6 @@
 #include <nlohmann/json.hpp>
 
 LRUCache::LRUCache(size_t capacity) : capacity_(capacity) {
-    // Pre-reserve space to avoid rehashing
     cache_.reserve(capacity);
 }
 
@@ -24,7 +23,6 @@ std::experimental::optional<CacheItem> LRUCache::get(int key) {
     auto& list_it = pair.first;
     auto& entry = pair.second;
 
-    // Move to front of LRU list
     lru_list_.splice(lru_list_.begin(), lru_list_, list_it);
 
     auto duration = std::chrono::steady_clock::now() - start;
@@ -34,7 +32,6 @@ std::experimental::optional<CacheItem> LRUCache::get(int key) {
 }
 
 size_t LRUCache::calculate_item_memory_size(const CacheItem& item) const {
-    // Calculate string content memory (actual character storage)
     size_t string_content =
         item.faculty.size() * sizeof(char) +
         item.course.size() * sizeof(char) +
@@ -42,7 +39,6 @@ size_t LRUCache::calculate_item_memory_size(const CacheItem& item) const {
         item.description.size() * sizeof(char) +
         item.telegramGroupLink.size() * sizeof(char);
 
-    // Calculate string capacity overhead (allocated but unused space)
     size_t string_capacity_overhead =
         (item.faculty.capacity() - item.faculty.size()) * sizeof(char) +
         (item.course.capacity() - item.course.size()) * sizeof(char) +
@@ -50,15 +46,13 @@ size_t LRUCache::calculate_item_memory_size(const CacheItem& item) const {
         (item.description.capacity() - item.description.size()) * sizeof(char) +
         (item.telegramGroupLink.capacity() - item.telegramGroupLink.size()) * sizeof(char);
 
-    // String object overhead (assuming typical string implementation)
-    constexpr size_t string_obj_overhead = sizeof(std::string); // Per string object
-    size_t total_string_overhead = string_obj_overhead * 5; // 5 string members
+    constexpr size_t string_obj_overhead = sizeof(std::string);
+    size_t total_string_overhead = string_obj_overhead * 5;
 
-    // Base structure overhead
     constexpr size_t base_size =
-        sizeof(CacheItem) +  // The item structure itself
-        sizeof(std::pair<typename std::list<CacheEntry>::iterator, CacheEntry>) + // Map entry
-        sizeof(CacheEntry);  // List node
+        sizeof(CacheItem) +
+        sizeof(std::pair<typename std::list<CacheEntry>::iterator, CacheEntry>) +
+        sizeof(CacheEntry);
 
     return base_size + string_content + string_capacity_overhead + total_string_overhead;
 }
@@ -89,7 +83,6 @@ void LRUCache::update_metrics_for_item(const CacheItem& item, bool adding) {
 void LRUCache::put_internal(int key, CacheItem value) {
     size_t new_item_size = calculate_item_memory_size(value);
 
-    // Remove old item's memory if it exists
     auto old_it = cache_.find(key);
     if (old_it != cache_.end()) {
         size_t old_size = calculate_item_memory_size(old_it->second.second.item);
@@ -100,7 +93,6 @@ void LRUCache::put_internal(int key, CacheItem value) {
 
     evict_if_needed();
 
-    // Add new entry
     CacheEntry entry{std::move(value), std::chrono::steady_clock::now()};
     lru_list_.push_front(entry);
     cache_[key] = {lru_list_.begin(), entry};
@@ -122,13 +114,11 @@ void LRUCache::validate_metrics() {
     size_t reported_memory = metrics_.get_memory_usage();
 
     if (actual_memory != reported_memory) {
-        // Correct the memory usage if there's a discrepancy
         ssize_t correction = static_cast<ssize_t>(actual_memory) -
                            static_cast<ssize_t>(reported_memory);
         metrics_.update_memory_usage(correction);
     }
 
-    // Ensure item count matches actual cache size
     size_t actual_count = cache_.size();
     metrics_.update_item_count(
         static_cast<ssize_t>(actual_count) -
@@ -139,7 +129,6 @@ void LRUCache::put(int key, CacheItem value) {
     auto start = std::chrono::steady_clock::now();
     std::lock_guard<std::mutex> lock(mutex_);
 
-    // Remove old item if it exists
     auto old_it = cache_.find(key);
     if (old_it != cache_.end()) {
         update_metrics_for_item(old_it->second.second.item, false);
@@ -147,7 +136,6 @@ void LRUCache::put(int key, CacheItem value) {
         cache_.erase(old_it);
     }
 
-    // Ensure we don't exceed capacity
     while (cache_.size() >= capacity_) {
         if (!lru_list_.empty()) {
             auto last = std::prev(lru_list_.end());
@@ -162,7 +150,6 @@ void LRUCache::put(int key, CacheItem value) {
         }
     }
 
-    // Add new entry
     CacheEntry entry{std::move(value), std::chrono::steady_clock::now()};
     update_metrics_for_item(entry.item, true);
 
@@ -202,16 +189,13 @@ void LRUCache::remove(int key) {
 void LRUCache::clear() {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    // Clear data structures
     cache_.clear();
     lru_list_.clear();
 
-    // Reset all metrics individually
     metrics_.update_memory_usage(-static_cast<ssize_t>(metrics_.get_memory_usage()));
     metrics_.update_string_memory(-static_cast<ssize_t>(metrics_.get_string_memory()));
     metrics_.update_item_count(-static_cast<ssize_t>(metrics_.get_item_count()));
 
-    // Reset atomic counters using store
     metrics_.reset_counters();
 }
 
@@ -270,7 +254,7 @@ void LRUCache::load_from_file(const std::string& filename) {
         for (const auto& item : j) {
             int key = item["key"].get<int>();
             CacheItem value = CacheItem::from_json(item["value"]);
-            put_internal(key, value);  // Use internal method to avoid recursive locking
+            put_internal(key, value);
         }
     } catch (const std::exception& e) {
         throw std::runtime_error("Failed to load cache: " + std::string(e.what()));

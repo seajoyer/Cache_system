@@ -64,7 +64,6 @@ TEST_CASE("Thread safety", "[cache]") {
                     completed++;
                 }
             } catch (const std::exception& e) {
-                // Log error but don't fail the test here
                 INFO("Thread " << i << " failed: " << e.what());
             }
         });
@@ -83,7 +82,6 @@ TEST_CASE("Cache serialization", "[cache]") {
     std::remove(test_file.c_str());
 
     SECTION("Save and load cache") {
-        // Save cache to file
         {
             LRUCache cache(2);
             CacheItem item{1, "CS", "Algorithms", "Title1", "Desc1", 10, "t.me/group1", 100};
@@ -96,7 +94,6 @@ TEST_CASE("Cache serialization", "[cache]") {
             verify_file.close();
         }
 
-        // Load cache from file
         {
             INFO("Loading cache from file");
             LRUCache new_cache(2);

@@ -11,7 +11,6 @@ class CachePerformanceTester:
 
     def create_test_item(self, id_num):
         """Create a test cache item with consistent test data."""
-        # Keep description size constant for predictable memory usage
         description = f"Test description for item {id_num} " * 10
         faculty = f"Faculty_{id_num % 5}"
         course = f"Course_{id_num % 10}"
@@ -56,29 +55,23 @@ class CachePerformanceTester:
         """Test basic cache operations with clear progress reporting."""
         self.print_test_header("Basic Operations", num_operations)
 
-        # Write phase
         print("\nPhase 1: Write Operations")
         for i in range(num_operations):
             if (i + 1) % (num_operations // 4) == 0:
                 self.print_metrics("Write", (i + 1) / num_operations * 100)
             self.cache.put(i, self.create_test_item(i))
 
-        # Read phase with temporal locality
         print("\nPhase 2: Read Operations (2x write count)")
         num_reads = num_operations * 2
         for i in range(num_reads):
             if (i + 1) % (num_reads // 4) == 0:
                 self.print_metrics("Read", (i + 1) / num_reads * 100)
 
-            # Create temporal locality by focusing on recent items
-            # Calculate a sliding window that's always valid
-            # We want to read from recently written items, but never exceed our data range
             window_size = min(1000, self.cache_size)
             current_position = min(i, num_operations - 1)  # Don't exceed our written data
             start = max(0, current_position - window_size)
             end = current_position
 
-            # Ensure we always have a valid range
             if start <= end:
                 key = random.randint(start, end)
             else:
@@ -125,7 +118,6 @@ class CachePerformanceTester:
         self.print_metrics("Final Concurrent Operations")
 
 def main():
-    # Test configuration
     CACHE_SIZE = 10000
     BASIC_OPS = 100000
     CONCURRENT_THREADS = 20
@@ -134,13 +126,10 @@ def main():
     try:
         tester = CachePerformanceTester(cache_size=CACHE_SIZE)
 
-        # Run basic operations test
         tester.test_basic_operations(num_operations=BASIC_OPS)
 
-        # Clear cache before concurrent test
         tester.cache.clear()
 
-        # Run concurrent access test
         tester.test_concurrent_access(
             num_threads=CONCURRENT_THREADS,
             operations_per_thread=OPS_PER_THREAD

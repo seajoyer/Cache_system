@@ -11,7 +11,6 @@ public:
     CacheMetrics(const CacheMetrics& other);
     CacheMetrics& operator=(const CacheMetrics& other);
 
-    // Inline methods (small and frequently called)
     void record_cache_hit() {
         cache_hits_.fetch_add(1, std::memory_order_relaxed);
     }
@@ -27,7 +26,6 @@ public:
         auto peak = peak_memory_usage_.load(std::memory_order_relaxed);
         while (new_usage > static_cast<ssize_t>(peak) &&
                !peak_memory_usage_.compare_exchange_weak(peak, new_usage)) {
-            // Keep trying if CAS failed
         }
     }
 
@@ -39,12 +37,10 @@ public:
         item_count_.fetch_add(delta, std::memory_order_relaxed);
     }
 
-    // Non-inline methods (declare only)
     void record_read(std::chrono::nanoseconds duration);
     void record_write(std::chrono::nanoseconds duration);
     void reset_counters();
 
-    // Getters
     double get_avg_read_time() const;
     double get_avg_write_time() const;
     size_t get_memory_usage() const;

@@ -32,7 +32,7 @@ private:
     void put_internal(int key, CacheItem value);
     void evict_if_needed();
     size_t calculate_item_memory_size(const CacheItem& item) const;
-    size_t calculate_string_memory(const CacheItem& item) const;  // Added missing declaration
+    size_t calculate_string_memory(const CacheItem& item) const;
     void update_metrics_for_item(const CacheItem& item, bool adding);
     size_t calculate_actual_memory_usage() const;
     void validate_metrics();
