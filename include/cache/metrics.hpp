@@ -6,7 +6,8 @@
 
 class CacheMetrics {
 public:
-    CacheMetrics() = default;
+    // Remove default constructor declaration since we'll define it explicitly
+    CacheMetrics();
 
     // Add copy constructor
     CacheMetrics(const CacheMetrics& other);
@@ -18,13 +19,13 @@ public:
     void record_write(std::chrono::nanoseconds duration);
     void update_memory_usage(ssize_t bytes);
 
-    double get_avg_read_time() const;
-    double get_avg_write_time() const;
-    size_t get_memory_usage() const;
+    [[nodiscard]] double get_avg_read_time() const;
+    [[nodiscard]] double get_avg_write_time() const;
+    [[nodiscard]] size_t get_memory_usage() const;
 
     void record_cache_hit();
     void record_cache_miss();
-    double get_hit_rate() const;
+    [[nodiscard]] double get_hit_rate() const;
 
 private:
     std::atomic<uint64_t> total_reads_{0};

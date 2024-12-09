@@ -1,14 +1,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "cache/lru_cache.hpp"
+#include "cache/metrics.hpp"
+#include "cache/pybind_utils.hpp"
 
 namespace py = pybind11;
-
-// Custom type caster for std::experimental::optional
-namespace pybind11 { namespace detail {
-    template <typename T>
-    struct type_caster<std::experimental::optional<T>> : optional_caster<std::experimental::optional<T>> {};
-}}
 
 PYBIND11_MODULE(cache_system, m) {
     m.doc() = "C++ LRU Cache system with Python bindings";
@@ -23,25 +19,17 @@ PYBIND11_MODULE(cache_system, m) {
                         int votes_count,
                         const std::string& telegram_group_link,
                         int user_id) {
-            auto item = CacheItem();
+            CacheItem item;
             item.id = id;
-            // Ensure strings are copied properly
-            item.faculty = std::string(faculty);
-            item.course = std::string(course);
-            item.title = std::string(title);
-            item.description = std::string(description);
+            item.faculty = faculty;
+            item.course = course;
+            item.title = title;
+            item.description = description;
             item.votesCount = votes_count;
-            item.telegramGroupLink = std::string(telegram_group_link);
+            item.telegramGroupLink = telegram_group_link;
             item.userId = user_id;
             return item;
-        }), py::arg("id") = 0,
-            py::arg("faculty") = "",
-            py::arg("course") = "",
-            py::arg("title") = "",
-            py::arg("description") = "",
-            py::arg("votes_count") = 0,
-            py::arg("telegram_group_link") = "",
-            py::arg("user_id") = 0)
+        }))
         .def_readwrite("id", &CacheItem::id)
         .def_readwrite("faculty", &CacheItem::faculty)
         .def_readwrite("course", &CacheItem::course)
@@ -52,6 +40,11 @@ PYBIND11_MODULE(cache_system, m) {
         .def_readwrite("user_id", &CacheItem::userId);
 
     py::class_<CacheMetrics>(m, "CacheMetrics")
+        .def(py::init<>())
+        .def_property_readonly("avg_read_time", &CacheMetrics::get_avg_read_time)
+        .def_property_readonly("avg_write_time", &CacheMetrics::get_avg_write_time)
+        .def_property_readonly("memory_usage", &CacheMetrics::get_memory_usage)
+        .def_property_readonly("hit_rate", &CacheMetrics::get_hit_rate)
         .def("get_avg_read_time", &CacheMetrics::get_avg_read_time)
         .def("get_avg_write_time", &CacheMetrics::get_avg_write_time)
         .def("get_memory_usage", &CacheMetrics::get_memory_usage)
@@ -59,12 +52,12 @@ PYBIND11_MODULE(cache_system, m) {
 
     py::class_<LRUCache>(m, "LRUCache")
         .def(py::init<size_t>())
-        .def("get", &LRUCache::get, py::return_value_policy::copy)
+        .def("get", &LRUCache::get, py::return_value_policy::move)
         .def("put", &LRUCache::put)
         .def("remove", &LRUCache::remove)
         .def("clear", &LRUCache::clear)
         .def("size", &LRUCache::size)
         .def("save_to_file", &LRUCache::save_to_file)
         .def("load_from_file", &LRUCache::load_from_file)
-        .def("get_metrics", &LRUCache::get_metrics);
+        .def("get_metrics", &LRUCache::get_metrics, py::return_value_policy::reference_internal);
 }

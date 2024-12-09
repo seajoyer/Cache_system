@@ -4,7 +4,6 @@
 #include <list>
 #include <mutex>
 #include <experimental/optional>
-#include <shared_mutex>
 #include "cache_item.hpp"
 #include "metrics.hpp"
 
@@ -16,12 +15,13 @@ public:
     void put(int key, CacheItem value);
     void remove(int key);
     void clear();
-    size_t size() const;
+    [[nodiscard]] size_t size() const;
+    [[nodiscard]] size_t capacity() const;
 
     void save_to_file(const std::string& filename);
     void load_from_file(const std::string& filename);
 
-    CacheMetrics get_metrics() const;
+    [[nodiscard]] const CacheMetrics& get_metrics() const { return metrics_; }
 
 private:
     struct CacheEntry {
@@ -30,12 +30,12 @@ private:
     };
 
     void put_internal(int key, CacheItem value);
-
     void evict_if_needed();
+    [[nodiscard]] size_t calculate_item_memory_size(const CacheItem& item) const;
 
     mutable std::mutex mutex_;
-    size_t capacity_;
-    std::unordered_map<int, std::pair<std::list<CacheEntry>::iterator, CacheEntry>> cache_;
+    const size_t capacity_;
+    std::unordered_map<int, std::pair<typename std::list<CacheEntry>::iterator, CacheEntry>> cache_;
     std::list<CacheEntry> lru_list_;
     CacheMetrics metrics_;
 };
